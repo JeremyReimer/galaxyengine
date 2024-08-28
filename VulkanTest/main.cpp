@@ -9,16 +9,6 @@
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 600;
 
-const std::vector<const char*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
-};
-
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
-
 class HelloTriangleApplication {
 public:
     void run() {
@@ -31,16 +21,44 @@ public:
 private:
     GLFWwindow* window;
     VkInstance instance;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     
     void initWindow() {
         glfwInit();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Galaxy Engine 0.02", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Galaxy Engine 0.03", nullptr, nullptr);
     }
     
     void initVulkan() {
         createInstance();
+        pickPhysicalDevice();
+    }
+    
+    void pickPhysicalDevice() {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+        if (deviceCount == 0) {
+            throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+        }
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance,&deviceCount, devices.data());
+        for (const auto& device: devices) {
+            if (isDeviceSuitable(device)) {
+                physicalDevice = device;
+                break;
+            }
+        }
+        
+        if (physicalDevice == VK_NULL_HANDLE) {
+            throw std::runtime_error("Failed to find a suitable GPU!");
+        }
+    }
+    
+    bool isDeviceSuitable(VkPhysicalDevice device) {
+        // We are assuming the device is suitable for now.
+        // If we need to add any checks later, refer to https://vulkan-tutorial.com/en/Drawing_a_triangle/Setup/Physical_devices_and_queue_families
+        return true;
     }
     
     std::vector<const char*> getRequiredExtensions(){
