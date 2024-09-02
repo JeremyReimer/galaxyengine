@@ -37,6 +37,6 @@ GalaxyEngine is a work in progress. Please check back for further updates.
 
 ## Version
 
-Current version: 0.06 August 30, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering. That's it!
+Current version: 0.07 August 30, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering, sets up image views. That's it!
 
 
