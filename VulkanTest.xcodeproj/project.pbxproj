@@ -101,6 +101,7 @@
 				4AE5606B2C7834800088BD03 /* Frameworks */,
 				4AE5606C2C7834800088BD03 /* Copy Files */,
 				4AE5606A2C7834800088BD03 /* Sources */,
+				4AE560892C87DEBC0088BD03 /* Run Script */,
 			);
 			buildRules = (
 			);
@@ -142,6 +143,27 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		4AE560892C87DEBC0088BD03 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "cd $SRCROOT/shaders\n/usr/local/bin/glslangValidator -V shader.vert\n/usr/local/bin/glslangValidator -V shader.frag\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders\nmv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv\nmv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		4AE5606A2C7834800088BD03 /* Sources */ = {
@@ -274,6 +296,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				HEADER_SEARCH_PATHS = (
 					/opt/homebrew/include,
 					/Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include,
@@ -294,6 +317,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				HEADER_SEARCH_PATHS = (
 					/opt/homebrew/include,
 					/Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include,

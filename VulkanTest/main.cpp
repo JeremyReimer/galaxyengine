@@ -41,7 +41,7 @@ public:
         mainLoop();
         cleanup();
     }
-
+    
 private:
     GLFWwindow* window;
     VkInstance instance;
@@ -70,6 +70,42 @@ private:
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createGraphicsPipeline();
+    }
+    
+    void createInstance() {
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pApplicationName = "Hello Triangle";
+        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.pEngineName = "No Engine";
+        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.apiVersion = VK_API_VERSION_1_0;
+        
+        VkInstanceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &appInfo;
+        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        auto extensions = getRequiredExtensions();
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        createInfo.ppEnabledExtensionNames = extensions.data();
+        
+        //FOR WINDOWS, UNCOMMENT BELOW AND COMMENT SIMILAR STUFF ABOVE
+        //See: https://vulkan-tutorial.com/en/Drawing_a_triangle/Setup/Instance
+        //uint32_t glfwExtensionCount = 0;
+        //const char** glfwExtensions;
+        
+        //glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+        //createInfo.enabledExtensionCount = glfwExtensionCount;
+        //createInfo.ppEnabledExtensionNames = glfwExtensions;
+        
+        createInfo.enabledLayerCount = 0;
+        VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
+        
+        if (result != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create instance!");
+        }
+
     }
     
     void createSurface() {
@@ -260,6 +296,10 @@ private:
         
     }
     
+    void createGraphicsPipeline() {
+        
+    }
+    
     bool isDeviceSuitable(VkPhysicalDevice device) {
 
         QueueFamilyIndices indices = findQueueFamilies(device);
@@ -319,43 +359,6 @@ private:
         return extensions;
     }
     
-    void createInstance() {
-        VkApplicationInfo appInfo{};
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Hello Triangle";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
-        
-        VkInstanceCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        createInfo.pApplicationInfo = &appInfo;
-        createInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-        auto extensions = getRequiredExtensions();
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-        createInfo.ppEnabledExtensionNames = extensions.data();
-        
-        //FOR WINDOWS, UNCOMMENT BELOW AND COMMENT SIMILAR STUFF ABOVE
-        //See: https://vulkan-tutorial.com/en/Drawing_a_triangle/Setup/Instance
-        //uint32_t glfwExtensionCount = 0;
-        //const char** glfwExtensions;
-        
-        //glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        //createInfo.enabledExtensionCount = glfwExtensionCount;
-        //createInfo.ppEnabledExtensionNames = glfwExtensions;
-        
-        createInfo.enabledLayerCount = 0;
-        VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-        
-        if (result != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create instance!");
-        }
-
-    }
-    
-
-
     void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
