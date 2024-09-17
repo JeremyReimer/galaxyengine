@@ -12,6 +12,7 @@
 #include <limits>
 #include <optional>
 #include <set>
+#include "lisp.hpp"
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
@@ -68,6 +69,7 @@ public:
     void run() {
         initWindow();
         initVulkan();
+        StartLisp();
         mainLoop();
         cleanup();
     }
@@ -109,7 +111,8 @@ private:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.10", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.20", nullptr, nullptr);
+        std::printf("glfw window successfully created.\n");
     }
 
     void initVulkan() {
@@ -169,6 +172,7 @@ private:
         glfwDestroyWindow(window);
 
         glfwTerminate();
+        std::printf("Program successfully closed.\n");
     }
 
     void createInstance() {
@@ -191,7 +195,7 @@ private:
 
         auto extensions = getRequiredExtensions();
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-        createInfo.ppEnabledExtensionNames = extensions.data();
+        createInfo.ppEnabledExtensionNames = extensions.data(); // May need to add VK_KHR_PORTABILITY_SUBSET
 
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
         if (enableValidationLayers) {
@@ -831,12 +835,14 @@ private:
         //glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
         //std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+        // Uncomment above ^^ for Windows, leave the following uncommented for macOS
         uint32_t glfwExtensionCount = 0;
         const char** glfwExtensions;
         glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
         memcpy(extensions.data(), glfwExtensions, sizeof(const char*) * glfwExtensionCount);
         extensions.push_back("VK_KHR_portability_enumeration");
+        // end of macOS-specific section
 
         if (enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);

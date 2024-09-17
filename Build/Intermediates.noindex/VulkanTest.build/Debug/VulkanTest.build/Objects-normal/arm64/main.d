@@ -12,4 +12,5 @@ dependencies: \
   /Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include/vk_video/vulkan_video_codec_h264std_decode.h \
   /Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include/vk_video/vulkan_video_codec_h265std_decode.h \
   /Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include/vk_video/vulkan_video_codec_av1std.h \
-  /Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include/vk_video/vulkan_video_codec_av1std_decode.h
+  /Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include/vk_video/vulkan_video_codec_av1std_decode.h \
+  /Users/jeremyreimer/VulkanTest/VulkanTest/VulkanTest/lisp.hpp
