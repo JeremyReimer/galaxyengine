@@ -122,7 +122,7 @@ private:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // comment out to lock window size
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.20", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.21", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         std::printf("glfw window successfully created.\n");

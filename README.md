@@ -37,10 +37,10 @@ GalaxyEngine is a work in progress. Please check back for further updates.
 
 ## Version
 
-Current version: 0.20 September 16, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering, sets up image views, sets up pipeline layout, framebuffers, and command buffers, and draws a single triangle. 
+Current version: 0.21 September 16, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering, sets up image views, sets up pipeline layout, framebuffers, and command buffers, and draws a single triangle. 
 
 But before it displays the triangle through Vulkan, it starts running a very simple LISP interpreter (thanks to Anthony Hay) that's just over 100 lines of code.
 
-The LISP interpreter currently runs in a REPL (Read Evaluate and Print Loop) which can be quit by typing in (quit) after which the triangle will appear. This REPL step will be removed after some more features are added, and at that point the interpreter will run during the 3D drawing loop instead.
+The LISP interpreter currently runs at the beginning of the program execution, after the window is loaded but before the triangle is drawn. Future versions will run the LISP interpreter continuously inside the main loop.
 
 
