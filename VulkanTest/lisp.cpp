@@ -5,14 +5,13 @@
 //  Created by Jeremy Reimer on 2024-09-16.
 //
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
 #include "lisp.hpp"
-
-// Run once at startup
-
-void StartLisp() {
-    printf("LISP Engine loaded.\n");
-    StartREPL();
-}
 
 // NOTE: The following LISP interpreter is borrowed from Anthony Hay, but it's a placeholder for now.
 
@@ -20,12 +19,7 @@ void StartLisp() {
 // Inspired by Peter Norvig's Lis.py.
 // Copyright (c) 2010 Anthony C. Hay. This program leaks memory.
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <list>
-#include <map>
+
 
 bool quit = false; // for exiting REPL
 
@@ -369,4 +363,15 @@ void StartREPL()
 {
     environment global_env; add_globals(global_env);
     repl("galaxyOS> ", &global_env);
+}
+
+// Run once at startup
+
+void StartLisp() {
+    printf("LISP Engine loaded.\n");
+    //StartREPL(); // We can start the REPL if we want before the triangle is run, but we won't right now
+    std::string opening_lisp_expression = "(print 123)";
+    environment startup_environment; add_globals(startup_environment);
+    cell start_cell = read(opening_lisp_expression);
+    std::printf("%s", to_string(eval(start_cell, &startup_environment)).c_str());
 }
