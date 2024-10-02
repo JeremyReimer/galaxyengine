@@ -1,6 +1,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -185,7 +187,7 @@ private:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // comment out to lock window size
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.22", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.3", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         std::printf("glfw window successfully created.\n");
