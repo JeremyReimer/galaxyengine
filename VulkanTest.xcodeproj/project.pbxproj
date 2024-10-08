@@ -166,7 +166,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $SRCROOT/shaders\n/usr/local/bin/glslangValidator -V shader.vert\n/usr/local/bin/glslangValidator -V shader.frag\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders\nmv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv\nmv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv\n";
+			shellScript = "cd $SRCROOT/shaders\n/usr/local/bin/glslangValidator -V shader.vert\n/usr/local/bin/glslangValidator -V shader.frag\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders\nmv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv\nmv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv\ncd $SRCROOT/textures\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures\ncp *.jpg $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures/\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -306,6 +306,7 @@
 				HEADER_SEARCH_PATHS = (
 					/opt/homebrew/include,
 					/Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include,
+					/Users/jeremyreimer/VulkanTest/VulkanTest,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/opt/homebrew/lib,
@@ -327,6 +328,7 @@
 				HEADER_SEARCH_PATHS = (
 					/opt/homebrew/include,
 					/Users/jeremyreimer/VulkanSDK/1.3.290.0/macOS/include,
+					/Users/jeremyreimer/VulkanTest/VulkanTest,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/opt/homebrew/lib,

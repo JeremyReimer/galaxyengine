@@ -6,6 +6,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -24,6 +27,7 @@
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
+const char* VERSION = "GalaxyEngine 0.31";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -187,7 +191,7 @@ private:
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // comment out to lock window size
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "GalaxyEngine 0.3", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, VERSION, nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         std::printf("glfw window successfully created.\n");
@@ -212,6 +216,7 @@ private:
         createGraphicsPipeline();
         createFramebuffers();
         createCommandPool();
+        createTextureImage();
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -726,6 +731,18 @@ private:
 
         if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create command pool!");
+        }
+    }
+    
+    void createTextureImage() {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load("/Users/jeremyreimer/VulkanTest/VulkanTest/textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
+        
+        printf("Loading textures...\n");
+        
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
         }
     }
     

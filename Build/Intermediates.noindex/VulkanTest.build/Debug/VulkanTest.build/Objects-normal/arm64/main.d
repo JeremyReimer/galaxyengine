@@ -185,4 +185,5 @@ dependencies: \
   /opt/homebrew/include/glm/gtc/../geometric.hpp \
   /opt/homebrew/include/glm/gtc/../trigonometric.hpp \
   /opt/homebrew/include/glm/gtc/../matrix.hpp \
+  /Users/jeremyreimer/VulkanTest/VulkanTest/stb_image.h \
   /Users/jeremyreimer/VulkanTest/VulkanTest/VulkanTest/lisp.hpp
