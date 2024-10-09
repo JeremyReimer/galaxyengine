@@ -38,7 +38,7 @@
       "indexPCHPath" : "/Users/jeremyreimer/Library/Developer/Xcode/DerivedData/VulkanTest-hcfmjhdekyckmsbzmszwsgcahhyt/Index.noindex/PrecompiledHeaders",
       "pchPath" : "/Users/jeremyreimer/VulkanTest/VulkanTest/Build/Intermediates.noindex/PrecompiledHeaders"
     },
-    "configurationName" : "Debug",
+    "configurationName" : "Release",
     "overrides" : {
       "synthesized" : {
         "table" : {

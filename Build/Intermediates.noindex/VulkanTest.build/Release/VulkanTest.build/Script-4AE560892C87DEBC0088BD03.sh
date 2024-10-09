@@ -5,4 +5,7 @@ cd $SRCROOT/shaders
 mkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders
 mv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv
 mv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv
+cd $SRCROOT/textures
+mkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures
+cp *.jpg $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures/
 
