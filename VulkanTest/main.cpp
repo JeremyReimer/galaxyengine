@@ -27,7 +27,7 @@
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
-const char* VERSION = "GalaxyEngine 0.32";
+const char* VERSION = "GalaxyEngine 0.33";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
