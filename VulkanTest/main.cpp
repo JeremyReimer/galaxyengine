@@ -26,6 +26,8 @@
 #include <array>
 #include "lisp.hpp"
 
+struct environment env; // This is the LISP environment to save variables, etc
+
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 const char* VERSION = "GalaxyEngine 0.34";
@@ -40,10 +42,10 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-#ifdef NDEBUG
-const bool enableValidationLayers = false;
-#else
+#ifdef DEBUG
 const bool enableValidationLayers = true;
+#else
+const bool enableValidationLayers = false;
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -118,7 +120,7 @@ struct UniformBufferObject {
     glm::mat4 proj;
 };
 
-const std::vector<Vertex> vertices = {
+std::vector<Vertex> vertices = {
     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
@@ -130,7 +132,7 @@ const std::vector<Vertex> vertices = {
     {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 };
 
-const std::vector<uint16_t> indices = {
+std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0,
     4, 5, 6, 6, 7, 4
 };
@@ -141,6 +143,7 @@ public:
         initWindow();
         initVulkan();
         StartLisp();
+        LoadLispVariables();
         mainLoop();
         cleanup();
     }
@@ -148,6 +151,8 @@ public:
 private:
 
     int framecounter = 0;
+    
+    environment global_env; // The LISP environment to save variables
     
     std::chrono::steady_clock::time_point start_time;
     
@@ -208,6 +213,16 @@ private:
     
     uint32_t currentFrame = 0;
 
+    void LoadLispVariables() {
+        // Load a bunch of stuff from the LISP interpreter
+        std::printf("Loading LISP variables");
+        environment global_environment; add_globals(global_environment);
+        std::string set_lisp_expression = "(set indices (quote (0 1 2 2 3 0 4 5 6 6 7 4)))";
+        RunLISPexpression(set_lisp_expression, &global_environment);
+        std::string lisp_expression2 = "indices";
+        RunLISPexpression(lisp_expression2, &global_environment);
+    }
+    
     void initWindow() {
         glfwInit();
 

@@ -14,122 +14,54 @@
 #include "lisp.hpp"
 
 // NOTE: The following LISP interpreter is borrowed from Anthony Hay, but it's a placeholder for now.
+// I may rewrite it later or I may start from scratch. :)
 
 // Scheme Interpreter in 90 lines of C++ (not counting lines after the first 90).
 // Inspired by Peter Norvig's Lis.py.
 // Copyright (c) 2010 Anthony C. Hay. This program leaks memory.
 
-
-
 bool quit = false; // for exiting REPL
 
 // return given mumber as a string
-std::string str(long n) { std::ostringstream os; os << n; return os.str(); }
+std::string str(float n) { std::ostringstream os; os << n; return os.str(); }
 
 // return true iff given character is '0'..'9'
 bool isdig(char c) { return isdigit(static_cast<unsigned char>(c)) != 0; }
-
-
-////////////////////// cell
-
-enum cell_type { Symbol, Number, List, Proc, Lambda };
-
-struct environment; // forward declaration; cell and environment reference each other
-
-// a variant that can hold any kind of lisp value
-struct cell {
-    typedef cell (*proc_type)(const std::vector<cell> &);
-    typedef std::vector<cell>::const_iterator iter;
-    typedef std::map<std::string, cell> map;
-    cell_type type; std::string val; std::vector<cell> list; proc_type proc; environment * env;
-    cell(cell_type type = Symbol) : type(type), env(0) {}
-    cell(cell_type type, const std::string & val) : type(type), val(val), env(0) {}
-    cell(proc_type proc) : type(Proc), proc(proc), env(0) {}
-};
-
-typedef std::vector<cell> cells;
-typedef cells::const_iterator cellit;
-
-const cell false_sym(Symbol, "#f");
-const cell true_sym(Symbol, "#t"); // anything that isn't false_sym is true
-const cell nil(Symbol, "nil");
-
-
-////////////////////// environment
-
-// a dictionary that (a) associates symbols with cells, and
-// (b) can chain to an "outer" dictionary
-struct environment {
-    environment(environment * outer = 0) : outer_(outer) {}
-
-    environment(const cells & parms, const cells & args, environment * outer)
-    : outer_(outer)
-    {
-        cellit a = args.begin();
-        for (cellit p = parms.begin(); p != parms.end(); ++p)
-            env_[p->val] = *a++;
-    }
-
-    // map a variable name onto a cell
-    typedef std::map<std::string, cell> map;
-
-    // return a reference to the innermost environment where 'var' appears
-    map & find(const std::string & var)
-    {
-        if (env_.find(var) != env_.end())
-            return env_; // the symbol exists in this environment
-        if (outer_)
-            return outer_->find(var); // attempt to find the symbol in some "outer" env
-        std::cout << "unbound symbol '" << var << "'\n";
-        // exit(1); // We aren't exiting on errors for the moment
-        return env_;
-    }
-
-    // return a reference to the cell associated with the given symbol 'var'
-    cell & operator[] (const std::string & var)
-    {
-        return env_[var];
-    }
-    
-private:
-    map env_; // inner symbol->cell mapping
-    environment * outer_; // next adjacent outer env, or 0 if there are no further environments
-};
 
 
 ////////////////////// built-in primitive procedures
 
 cell proc_add(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
-    for (cellit i = c.begin()+1; i != c.end(); ++i) n += atol(i->val.c_str());
+    float n(atof(c[0].val.c_str()));
+    for (cellit i = c.begin()+1; i != c.end(); ++i) n += atof(i->val.c_str());
     return cell(Number, str(n));
 }
 
 cell proc_sub(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
-    for (cellit i = c.begin()+1; i != c.end(); ++i) n -= atol(i->val.c_str());
+    float n(atof(c[0].val.c_str()));
+    for (cellit i = c.begin()+1; i != c.end(); ++i) n -= atof(i->val.c_str());
     return cell(Number, str(n));
 }
 
 cell proc_mul(const cells & c)
 {
-    long n(1);
-    for (cellit i = c.begin(); i != c.end(); ++i) n *= atol(i->val.c_str());
+    float n(1);
+    for (cellit i = c.begin(); i != c.end(); ++i) n *= atof(i->val.c_str());
     return cell(Number, str(n));
 }
 
 cell proc_div(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
-    for (cellit i = c.begin()+1; i != c.end(); ++i) n /= atol(i->val.c_str());
+    float n(atof(c[0].val.c_str()));
+    for (cellit i = c.begin()+1; i != c.end(); ++i) n /= atof(i->val.c_str());
     return cell(Number, str(n));
 }
 
 cell proc_greater(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
+    float n(atof(c[0].val.c_str()));
     for (cellit i = c.begin()+1; i != c.end(); ++i)
         if (n <= atol(i->val.c_str()))
             return false_sym;
@@ -138,7 +70,7 @@ cell proc_greater(const cells & c)
 
 cell proc_less(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
+    float n(atol(c[0].val.c_str()));
     for (cellit i = c.begin()+1; i != c.end(); ++i)
         if (n >= atol(i->val.c_str()))
             return false_sym;
@@ -147,7 +79,7 @@ cell proc_less(const cells & c)
 
 cell proc_less_equal(const cells & c)
 {
-    long n(atol(c[0].val.c_str()));
+    float n(atol(c[0].val.c_str()));
     for (cellit i = c.begin()+1; i != c.end(); ++i)
         if (n > atol(i->val.c_str()))
             return false_sym;
@@ -233,7 +165,7 @@ cell eval(cell x, environment * env)
             return x.list[1];
         if (x.list[0].val == "if")          // (if test conseq [alt])
             return eval(eval(x.list[1], env).val == "#f" ? (x.list.size() < 4 ? nil : x.list[3]) : x.list[2], env);
-        if (x.list[0].val == "set!")        // (set! var exp)
+        if (x.list[0].val == "set")        // (set! var exp)
             return env->find(x.list[1].val)[x.list[1].val] = eval(x.list[2], env);
         if (x.list[0].val == "define")      // (define var exp)
             return (*env)[x.list[1].val] = eval(x.list[2], env);
@@ -363,6 +295,14 @@ void StartREPL()
 {
     environment global_env; add_globals(global_env);
     repl("galaxyOS> ", &global_env);
+}
+
+// Execute a single LISP expression
+std::string RunLISPexpression(std::string expression_to_run, environment * env) {
+    cell run_cell = read(expression_to_run);
+    std::string result = to_string(eval(run_cell, env)).c_str();
+    std::cout << result; // Debugging
+    return result;
 }
 
 // Run once at startup
