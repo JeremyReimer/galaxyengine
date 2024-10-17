@@ -166,7 +166,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $SRCROOT/shaders\n/usr/local/bin/glslangValidator -V shader.vert\n/usr/local/bin/glslangValidator -V shader.frag\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders\nmv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv\nmv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv\ncd $SRCROOT/textures\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures\ncp *.jpg $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures/\n";
+			shellScript = "cd $SRCROOT/shaders\n/usr/local/bin/glslangValidator -V shader.vert\n/usr/local/bin/glslangValidator -V shader.frag\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders\nmv vert.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/vert.spv\nmv frag.spv $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/shaders/frag.spv\ncd $SRCROOT/textures\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures\ncp *.jpg $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures/\ncp *.png $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/textures/\ncd $SRCROOT/models\nmkdir $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/models\ncp *.obj $TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/models/\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'VulkanTest' in project 'VulkanTest' (no dependencies)
