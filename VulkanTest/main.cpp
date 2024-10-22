@@ -9,6 +9,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
+#include <unordered_map>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
