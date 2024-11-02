@@ -18,7 +18,7 @@
 
 ////////////////////// cell
 
-enum cell_type { Symbol, Number, List, Proc, Lambda };
+enum cell_type { Symbol, Number, List, Proc, Lambda, String };
 
 struct environment; // forward declaration; cell and environment reference each other
 

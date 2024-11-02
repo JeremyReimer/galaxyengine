@@ -12,6 +12,8 @@
 
 #include <unordered_map>
 
+#include <inttypes.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -909,6 +911,7 @@ private:
     void createTextureSampler() {
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        std::printf("Maximum Bound Descriptor Sets: %" PRIu32 " \n",&properties.limits.maxBoundDescriptorSets);
         
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1329,7 +1332,7 @@ private:
         }
     }
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, uint32_t currentImage) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
@@ -1374,9 +1377,13 @@ private:
         
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
         
+            // We want multiple descriptorSets, one for the scene and one for each object
+            // REPLACE &descriptorSets[currentFrame] with &objects[i].descriptorSet for multiple objects
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            // REPLACE static_cast<uint32_t>(indices.size()) with objects[i].indexCount and second-to-last 0 with
+            // objects[i].indexBase
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-
+        
         vkCmdEndRenderPass(commandBuffer);
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -1457,7 +1464,7 @@ private:
         vkResetFences(device, 1, &inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
-        recordCommandBuffer(commandBuffers[currentFrame], imageIndex); // This line actually sends the draw commands!
+        recordCommandBuffer(commandBuffers[currentFrame], imageIndex, currentFrame); // This line actually sends the draw commands!
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

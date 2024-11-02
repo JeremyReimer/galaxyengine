@@ -158,6 +158,8 @@ cell eval(cell x, environment * env)
         return env->find(x.val)[x.val];
     if (x.type == Number)
         return x;
+    if (x.type == String)
+        return x;
     if (x.list.empty())
         return nil;
     if (x.list[0].type == Symbol) {
@@ -230,11 +232,13 @@ std::list<std::string> tokenize(const std::string & str)
     return tokens;
 }
 
-// numbers become Numbers; every other token is a Symbol
+// numbers become Numbers; stuff in quotes become Strings, every other token is a Symbol
 cell atom(const std::string & token)
 {
     if (isdig(token[0]) || (token[0] == '-' && isdig(token[1])))
         return cell(Number, token);
+    else if (token[0] == '\"')
+        return cell(String, token);
     return cell(Symbol, token);
 }
 
