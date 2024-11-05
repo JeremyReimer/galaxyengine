@@ -42,7 +42,7 @@ const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 const char* VERSION = "GalaxyEngine 0.41";
 
-const std::string MODEL_PATH = "models/zruthy-fighter1.obj";
+//const std::string MODEL_PATH = "models/zruthy-fighter1.obj";
 const std::string TEXTURE_PATH = "textures/spaceship-texture.png";
 const std::array<std::string, 2> ModelPaths = {"models/zruthy-fighter1.obj","models/viking_room.obj"};
 const std::array<std::string, 2> TexturePaths = {"textures/spaceship-texture.png", "textures/viking_room.png"};
@@ -206,6 +206,8 @@ private:
     
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+    std::vector<uint32_t> perModelVertices; // Count unique vertices for each 3D model
+    std::vector<uint32_t> perModelIndices; // Count indices for each 3D model (same as non-unique vertices)
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
@@ -232,9 +234,9 @@ private:
         // Load a bunch of stuff from the LISP interpreter
         std::printf("\nLoading LISP variables...\n");
         environment global_environment; add_globals(global_environment);
-        std::string set_lisp_expression = "(set indices (quote (0 1 2 2 3 0 4 5 6 6 7 4)))";
+        std::string set_lisp_expression = "(set models (quote (\"models/zruthy-fighter1.obj\" \"models/viking_room.obj\")))";
         RunLISPexpression(set_lisp_expression, &global_environment);
-        std::string lisp_expression2 = "indices";
+        std::string lisp_expression2 = "models";
         RunLISPexpression(lisp_expression2, &global_environment);
     }
     
@@ -911,7 +913,7 @@ private:
     void createTextureSampler() {
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-        std::printf("Maximum Bound Descriptor Sets: %" PRIu32 " \n",&properties.limits.maxBoundDescriptorSets);
+        //std::printf("Maximum Bound Descriptor Sets: %" PRIu32 " \n",&properties.limits.maxBoundDescriptorSets);
         
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1072,7 +1074,9 @@ private:
     void loadModels() {
         for (int model = 0; model < MAX_MODELS; model++) {
             
-            
+            int vertexCount = 0; // need to count vertices in each model
+            int uniqueVertexCount = 0; // and uniques as well
+            int indexCount = 0; // and don't forget indices
             tinyobj::attrib_t attrib;
             std::vector<tinyobj::shape_t> shapes;
             std::vector<tinyobj::material_t> materials;
@@ -1101,19 +1105,36 @@ private:
                     
                     vertex.color = {1.0f, 1.0f, 1.0f};
                     
+                    vertexCount++;
+                    
                     if (uniqueVertices.count(vertex) == 0) {
                         uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                         vertices.push_back(vertex);
+                        uniqueVertexCount++;
                     }
                     
                     indices.push_back(uniqueVertices[vertex]);
+                    indexCount++;
                 }
             }
+            std::printf("Total vertices in model %i: %i\n", model, vertexCount);
+            std::printf("Total unique vertices in model %i: %i\n", model, uniqueVertexCount);
+            std::printf("Total indices in model %i: %i\n", model, indexCount);
+            perModelVertices.push_back(uniqueVertexCount);
+            perModelIndices.push_back(indexCount);
+
+        }
+        std::printf("----\nTotal vertices across all models: %zu\n", vertices.size());
+        std::printf("Total indices across all models: %zu\n", indices.size());
+        for (int j = 0; j < MAX_MODELS; j++) {
+            std::printf("Unique vertices in model %i: %i\n", j, perModelVertices[j]);
+            std::printf("Unique indices in model %i: %i\n", j, perModelIndices[j]);
         }
     }
     
     void createVertexBuffer() {
         VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+        std::printf("Allocating Vertex buffer of size: %" PRId64 "\n", bufferSize);
         
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1134,6 +1155,7 @@ private:
     
     void createIndexBuffer() {
         VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+        std::printf("Allocating Index buffer of size: %" PRId64 "\n", bufferSize);
         
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1177,7 +1199,7 @@ private:
         poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
-        poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+        poolInfo.maxSets = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT * MAX_MODELS);
         
         if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
