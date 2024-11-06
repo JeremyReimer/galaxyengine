@@ -40,10 +40,10 @@ struct environment env; // This is the LISP environment to save variables, etc
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
-const char* VERSION = "GalaxyEngine 0.41";
+const char* VERSION = "GalaxyEngine 0.50";
 
 //const std::string MODEL_PATH = "models/zruthy-fighter1.obj";
-const std::string TEXTURE_PATH = "textures/spaceship-texture.png";
+//const std::string TEXTURE_PATH = "textures/spaceship-texture.png";
 const std::array<std::string, 2> ModelPaths = {"models/zruthy-fighter1.obj","models/viking_room.obj"};
 const std::array<std::string, 2> TexturePaths = {"textures/spaceship-texture.png", "textures/viking_room.png"};
 const int MAX_MODELS = ModelPaths.size();
@@ -199,10 +199,10 @@ private:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
     
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
-    VkSampler textureSampler;
+    std::vector<VkImage> textureImages;
+    std::vector<VkDeviceMemory> textureImageMemories;
+    std::vector<VkImageView> textureImageViews;
+    std::vector<VkSampler> textureSamplers;
     
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -334,11 +334,13 @@ private:
     void cleanup() {
         cleanupSwapChain();
         
-        vkDestroySampler(device, textureSampler, nullptr);
-        vkDestroyImageView(device, textureImageView, nullptr);
-        
-        vkDestroyImage(device, textureImage, nullptr);
-        vkFreeMemory(device, textureImageMemory, nullptr);
+        for (int j=0; j < MAX_MODELS; j++) {
+            vkDestroySampler(device, textureSamplers[j], nullptr);
+            vkDestroyImageView(device, textureImageViews[j], nullptr);
+            
+            vkDestroyImage(device, textureImages[j], nullptr);
+            vkFreeMemory(device, textureImageMemories[j], nullptr);
+        }
 
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
@@ -874,40 +876,56 @@ private:
     }
     
     void createTextureImage() {
-        int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        VkDeviceSize imageSize = texWidth * texHeight * 4;
-        
-        printf("Loading textures...\n");
-        
-        if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
+        for (int j=0; j < MAX_MODELS; j++) {
+            
+            
+            int texWidth, texHeight, texChannels;
+            stbi_uc* pixels = stbi_load(TexturePaths[j].c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            VkDeviceSize imageSize = texWidth * texHeight * 4;
+            
+            printf("Loading textures...\n");
+            
+            if (!pixels) {
+                throw std::runtime_error("failed to load texture image!");
+            }
+            
+            VkBuffer stagingBuffer;
+            VkDeviceMemory stagingBufferMemory;
+            createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+            
+            void* data;
+            vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+            memcpy(data, pixels, static_cast<size_t>(imageSize));
+            vkUnmapMemory(device, stagingBufferMemory);
+            
+            stbi_image_free(pixels);
+            
+            std::printf("Creating Image %i for file %s\n",j, TexturePaths[j].c_str());
+            // need to create new textureImages[] and textureImageMemories[]
+            VkImage textureImage;
+            textureImages.push_back(textureImage);
+            VkDeviceMemory textureImageMemory;
+            textureImageMemories.push_back(textureImageMemory);
+            createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+            textureImages[j] = textureImage;
+            textureImageMemories[j] = textureImageMemory;
+            
+            transitionImageLayout(textureImages[j], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            copyBufferToImage(stagingBuffer, textureImages[j], static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+            transitionImageLayout(textureImages[j], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+            
+            vkDestroyBuffer(device, stagingBuffer, nullptr);
+            vkFreeMemory(device, stagingBufferMemory, nullptr);
         }
-        
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-        
-        void* data;
-        vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-        memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(device, stagingBufferMemory);
-        
-        stbi_image_free(pixels);
-        
-        createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
-        
-        transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-        copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-        transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        
-        vkDestroyBuffer(device, stagingBuffer, nullptr);
-        vkFreeMemory(device, stagingBufferMemory, nullptr);
-        
     }
     
     void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+        for (int j = 0; j < MAX_MODELS; j++) {
+            VkImageView textureImageView;
+            textureImageView = createImageView(textureImages[j], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+            textureImageViews.push_back(textureImageView);
+            textureImageViews[j] = textureImageView;
+        }
     }
     
     void createTextureSampler() {
@@ -915,26 +933,32 @@ private:
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
         //std::printf("Maximum Bound Descriptor Sets: %" PRIu32 " \n",&properties.limits.maxBoundDescriptorSets);
         
-        VkSamplerCreateInfo samplerInfo{};
-        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
-        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-        samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-        samplerInfo.unnormalizedCoordinates = VK_FALSE;
-        samplerInfo.compareEnable = VK_FALSE;
-        samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        samplerInfo.mipLodBias = 0.0f;
-        samplerInfo.minLod = 0.0f;
-        samplerInfo.maxLod = 0.0f;
-        
-        if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create texture sampler!");
+        for (int j=0; j < MAX_MODELS; j++) {
+            VkSamplerCreateInfo samplerInfo{};
+            samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            samplerInfo.magFilter = VK_FILTER_LINEAR;
+            samplerInfo.minFilter = VK_FILTER_LINEAR;
+            samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerInfo.anisotropyEnable = VK_TRUE;
+            samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+            samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+            samplerInfo.unnormalizedCoordinates = VK_FALSE;
+            samplerInfo.compareEnable = VK_FALSE;
+            samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+            samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            samplerInfo.mipLodBias = 0.0f;
+            samplerInfo.minLod = 0.0f;
+            samplerInfo.maxLod = 0.0f;
+            
+            VkSampler textureSampler;
+            
+            if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create texture sampler!");
+            }
+            
+            textureSamplers.push_back(textureSampler);
         }
     }
     
@@ -1230,8 +1254,8 @@ private:
                 
                 VkDescriptorImageInfo imageInfo{};
                 imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageInfo.imageView = textureImageView;
-                imageInfo.sampler = textureSampler;
+                imageInfo.imageView = textureImageViews[j];
+                imageInfo.sampler = textureSamplers[j];
                 
                 std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
                 
@@ -1406,11 +1430,18 @@ private:
         
             // We want multiple descriptorSets, one for the scene and one for each object
             // REPLACE &descriptorSets[currentFrame] with &objects[i].descriptorSet for multiple objects
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+        for (int j=0; j < MAX_MODELS; j++) { // Iterate over all available models (for now)
+            
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * j], 0, nullptr);
             // REPLACE static_cast<uint32_t>(indices.size()) with objects[i].indexCount and second-to-last 0 with
             // objects[i].indexBase
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
-        
+            int indexCount = perModelIndices[j];
+            int indexBase = 0;
+            if (j > 0) {
+                indexBase = perModelIndices[j-1] + 1; // if we're not at the first model, the offset is the size of the last model
+            }
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indexCount), 1, 0, indexBase, 0);
+        }
         vkCmdEndRenderPass(commandBuffer);
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
