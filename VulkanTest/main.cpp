@@ -229,6 +229,7 @@ private:
     bool framebufferResized = false;
     
     uint32_t currentFrame = 0;
+    uint32_t currentModel = 0;
 
     void LoadLispVariables() {
         // Load a bunch of stuff from the LISP interpreter
@@ -1117,9 +1118,9 @@ private:
                     Vertex vertex{};
                     
                     vertex.pos = {
-                        attrib.vertices[3 * index.vertex_index + 0] + model,
-                        attrib.vertices[3 * index.vertex_index + 1] + model,
-                        attrib.vertices[3 * index.vertex_index + 2] + model
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2]
                     };
                     
                     vertex.texCoord = {
@@ -1239,7 +1240,7 @@ private:
         allocInfo.pSetLayouts = layouts.data();
         
         descriptorSets.resize(MAX_FRAMES_IN_FLIGHT * MAX_MODELS);
-        std::printf("Just resized Descriptor Sets to: %i", MAX_FRAMES_IN_FLIGHT * MAX_MODELS);
+        std::printf("Just resized Descriptor Sets to: %i\n", MAX_FRAMES_IN_FLIGHT * MAX_MODELS);
         if (vkAllocateDescriptorSets(device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate descriptor sets!");
         }
@@ -1438,9 +1439,10 @@ private:
             int indexCount = perModelIndices[j];
             int indexBase = 0;
             if (j > 0) {
-                indexBase = perModelIndices[j-1] + 1; // if we're not at the first model, the offset is the size of the last model
+                indexBase = perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model
             }
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indexCount), 1, 0, indexBase, 0);
+            std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indexCount), 1, indexBase, 0, 0);
         }
         vkCmdEndRenderPass(commandBuffer);
 
@@ -1471,7 +1473,7 @@ private:
 
     }
     
-    void updateUniformBuffer(uint32_t currentImage) {
+    void updateUniformBuffer(uint32_t currentImage, uint32_t currentModel) {
         // Get joystick axes
         int count;
         const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
@@ -1485,18 +1487,22 @@ private:
         
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-        
-        UniformBufferObject ubo{};
-        // replace "1.0f" below with "time" to enable auto-rotate for model
-        ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        glm::vec3 playerAngleX = glm::rotateX(glm::vec3(2.0f, 2.0f, 2.0f), axes[0] + 2.0f * 3.0f + 2.0f);
-        playerAngleX *= (axes[3] + 2.0f) * 1.0f;
-        glm::vec3 playerAngleY = glm::rotateY(glm::vec3(2.0f, 2.0f, 2.0f), axes[1] * 3.0f + 2.0f);
-        ubo.view = glm::lookAt(playerAngleX, playerAngleY, glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1; // Because GLM was designed for OpenGL which has an inverse Y axis from Vulkan
-        
-        memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
+
+        for (int j=0; j < MAX_MODELS; j++) {
+            UniformBufferObject ubo{};
+            // replace "1.0f" below with "time" to enable auto-rotate for model
+            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            glm::vec3 playerAngleX = glm::rotateX(glm::vec3(2.0f, 2.0f, 2.0f), axes[0] + 2.0f * 3.0f + 2.0f);
+            playerAngleX *= (axes[3] + 2.0f) * 1.0f;
+            glm::vec3 playerAngleY = glm::rotateY(glm::vec3(2.0f, 2.0f, 2.0f), axes[1] * 3.0f + 2.0f);
+            ubo.view = glm::lookAt(playerAngleX, playerAngleY, glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+            ubo.proj[1][1] *= -1; // Because GLM was designed for OpenGL which has an inverse Y axis from Vulkan
+            
+            // we need to get to 0,1,2,3 based on currentImage (0 or 1) and j (0 or 1)
+            // 0 + 0 = 0; 0 + 1 = 1; 1 + 0 = 1; 1 + 1 = 2; doesn't work
+            memcpy(uniformBuffersMapped[currentImage * j], &ubo, sizeof(ubo));
+        }
         
     }
 
@@ -1516,7 +1522,7 @@ private:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
         
-        updateUniformBuffer(currentFrame);
+        updateUniformBuffer(currentFrame, currentModel);
         
         // Only reset the fence if we are submitting work
         vkResetFences(device, 1, &inFlightFences[currentFrame]);
