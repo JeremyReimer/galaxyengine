@@ -86,5 +86,6 @@ void add_globals(environment & env);
 void StartLisp();
 void StartREPL();
 std::string RunLISPexpression(std::string expression_to_run, environment * env);
+std::string to_string(const cell & exp);
 
 #endif /* lisp_hpp */

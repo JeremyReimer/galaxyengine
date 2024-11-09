@@ -217,6 +217,8 @@ private:
     std::vector<VkDeviceMemory> uniformBuffersMemory;
     std::vector<void*> uniformBuffersMapped;
     
+    std::vector<UniformBufferObject> ubos; // one UBO per object
+    
     VkDescriptorPool descriptorPool;
     std::vector<VkDescriptorSet> descriptorSets;
     
@@ -908,6 +910,7 @@ private:
             VkDeviceMemory textureImageMemory;
             textureImageMemories.push_back(textureImageMemory);
             createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+            std::printf("Texture image took up %llu bytes of memory.\n",imageSize);
             textureImages[j] = textureImage;
             textureImageMemories[j] = textureImageMemory;
             
@@ -925,7 +928,6 @@ private:
             VkImageView textureImageView;
             textureImageView = createImageView(textureImages[j], VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
             textureImageViews.push_back(textureImageView);
-            textureImageViews[j] = textureImageView;
         }
     }
     
@@ -1211,6 +1213,12 @@ private:
             
             vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
         }
+        
+        // initialize ubo array (not sure if we need this)
+        for (int j=0; j < MAX_MODELS; j++) {
+            UniformBufferObject ubo;
+            ubos.push_back(ubo);
+        }
     }
     
     void createDescriptorPool() {
@@ -1441,7 +1449,7 @@ private:
             if (j > 0) {
                 indexBase = perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model
             }
-            std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            //std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indexCount), 1, indexBase, 0, 0);
         }
         vkCmdEndRenderPass(commandBuffer);
@@ -1489,19 +1497,21 @@ private:
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         for (int j=0; j < MAX_MODELS; j++) {
-            UniformBufferObject ubo{};
-            // replace "1.0f" below with "time" to enable auto-rotate for model
-            ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            UniformBufferObject ubo{}; // get the UBO from the array
+            ubo = ubos[j];
+            if (j == 3) {
+                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            } else {
+                ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            }
             glm::vec3 playerAngleX = glm::rotateX(glm::vec3(2.0f, 2.0f, 2.0f), axes[0] + 2.0f * 3.0f + 2.0f);
             playerAngleX *= (axes[3] + 2.0f) * 1.0f;
             glm::vec3 playerAngleY = glm::rotateY(glm::vec3(2.0f, 2.0f, 2.0f), axes[1] * 3.0f + 2.0f);
             ubo.view = glm::lookAt(playerAngleX, playerAngleY, glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
             ubo.proj[1][1] *= -1; // Because GLM was designed for OpenGL which has an inverse Y axis from Vulkan
-            
-            // we need to get to 0,1,2,3 based on currentImage (0 or 1) and j (0 or 1)
-            // 0 + 0 = 0; 0 + 1 = 1; 1 + 0 = 1; 1 + 1 = 2; doesn't work
-            memcpy(uniformBuffersMapped[currentImage * j], &ubo, sizeof(ubo));
+            int bufferImage = (j * 2) + currentImage;
+            memcpy(uniformBuffersMapped[bufferImage], &ubo, sizeof(ubo));
         }
         
     }

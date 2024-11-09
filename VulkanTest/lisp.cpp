@@ -132,6 +132,8 @@ cell proc_print(const cells & c)
 {
     cell result(c[0]);
     std::printf("Printing expression...\n");
+    std::cout << to_string(result) << '\n';
+    //std::printf(result); // We need to convert this to const char * somehow
     return result;
 }
 
