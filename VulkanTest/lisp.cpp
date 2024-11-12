@@ -246,7 +246,7 @@ std::list<std::string> tokenize(const std::string & str)
     
     //std::printf("Left parens: %i Right parens: %i", leftparencount, rightparencount);
     if (leftparencount != rightparencount) {
-        std::printf("Mispatched parenthesis! LISP expression not evaluated.\n");
+        std::printf("Mismatched parentheses! LISP expression not evaluated.\n");
         return noresult;
     }
     else if (leftparencount == 0 && rightparencount == 0 && tokens.size() == 0) {

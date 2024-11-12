@@ -40,7 +40,7 @@ struct environment env; // This is the LISP environment to save variables, etc
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
-const char* VERSION = "GalaxyEngine 0.50";
+const char* VERSION = "GalaxyEngine 0.52";
 
 //const std::string MODEL_PATH = "models/zruthy-fighter1.obj";
 //const std::string TEXTURE_PATH = "textures/spaceship-texture.png";
@@ -1448,7 +1448,7 @@ private:
             // REPLACE &descriptorSets[currentFrame] with &objects[i].descriptorSet for multiple objects
         for (int j=0; j < MAX_MODELS; j++) { // Iterate over all available models (for now)
             
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame * j], 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[j * 2 + currentFrame], 0, nullptr);
             // REPLACE static_cast<uint32_t>(indices.size()) with objects[i].indexCount and second-to-last 0 with
             // objects[i].indexBase
             int indexCount = perModelIndices[j];
