@@ -268,6 +268,13 @@ private:
             const char* name = glfwGetJoystickName(GLFW_JOYSTICK_3);
             std::printf("Joystick 3 - %s", name);
         }
+        if (!present1 && !present2 && !present3)
+        {
+            std::printf("No joysticks or gamepads detected! Game will now exit.\n");
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            exit(1);
+        }
         
     }
     

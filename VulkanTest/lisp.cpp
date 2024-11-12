@@ -217,6 +217,11 @@ cell eval(cell x, environment * env)
 std::list<std::string> tokenize(const std::string & str)
 {
     std::list<std::string> tokens;
+    std::list<std::string> noresult;
+    noresult.push_back("(");
+    noresult.push_back(")");
+    int leftparencount = 0;
+    int rightparencount = 0;
     const char * s = str.c_str();
     while (*s) {
         while (*s == ' ')
@@ -225,13 +230,33 @@ std::list<std::string> tokenize(const std::string & str)
             tokens.push_back(*s++ == '(' ? "(" : ")");
         else {
             const char * t = s;
-            while (*t && *t != ' ' && *t != '(' && *t != ')')
+            while (*t && *t != ' ' && *t != '(' && *t != ')') {
                 ++t;
+            }
             tokens.push_back(std::string(s, t));
             s = t;
         }
     }
-    return tokens;
+    
+    // Check to see if parentheses match
+    for (auto const& i : tokens) {
+        if (i == "(") { leftparencount++; }
+        if (i == ")") { rightparencount++; }
+    }
+    
+    //std::printf("Left parens: %i Right parens: %i", leftparencount, rightparencount);
+    if (leftparencount != rightparencount) {
+        std::printf("Mispatched parenthesis! LISP expression not evaluated.\n");
+        return noresult;
+    }
+    else if (leftparencount == 0 && rightparencount == 0 && tokens.size() == 0) {
+        std::printf("\n");
+        return noresult;
+    }
+    else
+    {
+        return tokens;
+    }
 }
 
 // numbers become Numbers; stuff in quotes become Strings, every other token is a Symbol
