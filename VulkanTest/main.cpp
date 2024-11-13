@@ -42,8 +42,6 @@ const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 const char* VERSION = "GalaxyEngine 0.52";
 
-//const std::string MODEL_PATH = "models/zruthy-fighter1.obj";
-//const std::string TEXTURE_PATH = "textures/spaceship-texture.png";
 const std::array<std::string, 2> ModelPaths = {"models/zruthy-fighter1.obj","models/viking_room.obj"};
 const std::array<std::string, 2> TexturePaths = {"textures/spaceship-texture.png", "textures/viking_room.png"};
 const int MAX_MODELS = ModelPaths.size();
@@ -229,6 +227,9 @@ private:
     std::vector<VkFence> inFlightFences;
     
     bool framebufferResized = false;
+    
+    std::vector<glm::vec3> ObjectMovementDirection;
+    std::vector<float> ObjectVelocity;
     
     uint32_t currentFrame = 0;
     uint32_t currentModel = 0;
@@ -1506,8 +1507,8 @@ private:
         for (int j=0; j < MAX_MODELS; j++) {
             UniformBufferObject ubo{}; // get the UBO from the array
             ubo = ubos[j];
-            if (j == 3) {
-                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            if (j == 1) {
+                ubo.model = glm::rotate(glm::mat4(1.0f), time * -1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             } else {
                 ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
