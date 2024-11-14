@@ -42,8 +42,8 @@ const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 const char* VERSION = "GalaxyEngine 0.52";
 
-const std::array<std::string, 2> ModelPaths = {"models/zruthy-fighter1.obj","models/viking_room.obj"};
-const std::array<std::string, 2> TexturePaths = {"textures/spaceship-texture.png", "textures/viking_room.png"};
+const std::array<std::string, 3> ModelPaths = {"models/galaxy-ui.obj", "models/zruthy-fighter1.obj","models/viking_room.obj"};
+const std::array<std::string, 3> TexturePaths = {"textures/ui-texture.png","textures/spaceship-texture.png", "textures/viking_room.png"};
 const int MAX_MODELS = ModelPaths.size();
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -310,6 +310,7 @@ private:
         createDescriptorSets();
         createCommandBuffers();
         createSyncObjects();
+        setObjectProperties();
     }
 
     void mainLoop() {
@@ -1489,6 +1490,13 @@ private:
 
     }
     
+    void setObjectProperties() {
+        for (int j = 0; j < MAX_MODELS; j++) {
+            ObjectMovementDirection.push_back(glm::vec3(0.1f * j, 0.1f, 0.1f));
+            ObjectVelocity.push_back(0.01f);
+        }
+    }
+    
     void updateUniformBuffer(uint32_t currentImage, uint32_t currentModel) {
         // Get joystick axes
         int count;
@@ -1509,8 +1517,15 @@ private:
             ubo = ubos[j];
             if (j == 1) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), time * -1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            } else {
+            } else if (j == 2) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            }
+            else  if (j == 0) {
+                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            }
+            // update movement (all except j=0 which is the UI layer)
+            if (j != 0) {
+                ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time);
             }
             glm::vec3 playerAngleX = glm::rotateX(glm::vec3(2.0f, 2.0f, 2.0f), axes[0] + 2.0f * 3.0f + 2.0f);
             playerAngleX *= (axes[3] + 2.0f) * 1.0f;

@@ -9,4 +9,7 @@ layout(set = 0, location = 0) out vec4 outColor;
 
 void main() {
     outColor = texture(texSampler, fragTexCoord);
+    if (outColor.w < 0.8) {
+        discard;
+    }
 }
