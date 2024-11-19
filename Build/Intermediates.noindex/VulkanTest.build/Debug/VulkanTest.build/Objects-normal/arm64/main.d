@@ -185,6 +185,24 @@ dependencies: \
   /opt/homebrew/include/glm/gtc/../geometric.hpp \
   /opt/homebrew/include/glm/gtc/../trigonometric.hpp \
   /opt/homebrew/include/glm/gtc/../matrix.hpp \
+  /opt/homebrew/include/glm/gtx/rotate_vector.hpp \
+  /opt/homebrew/include/glm/gtx/../gtx/transform.hpp \
+  /opt/homebrew/include/glm/gtx/../glm.hpp \
+  /opt/homebrew/include/glm/gtx/../gtc/matrix_transform.hpp \
+  /opt/homebrew/include/glm/gtx/transform.inl \
+  /opt/homebrew/include/glm/gtx/../gtc/epsilon.hpp \
+  /opt/homebrew/include/glm/gtc/../detail/setup.hpp \
+  /opt/homebrew/include/glm/gtc/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/gtc/epsilon.inl \
+  /opt/homebrew/include/glm/gtc/../vector_relational.hpp \
+  /opt/homebrew/include/glm/gtc/../common.hpp \
+  /opt/homebrew/include/glm/gtx/../ext/vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/qualifier.hpp \
+  /opt/homebrew/include/glm/./ext/vector_relational.inl \
+  /opt/homebrew/include/glm/./ext/../vector_relational.hpp \
+  /opt/homebrew/include/glm/./ext/../common.hpp \
+  /opt/homebrew/include/glm/./ext/../detail/type_float.hpp \
+  /opt/homebrew/include/glm/gtx/rotate_vector.inl \
   /opt/homebrew/include/glm/gtx/hash.hpp \
   /opt/homebrew/include/glm/gtx/../vec2.hpp \
   /opt/homebrew/include/glm/gtx/../vec3.hpp \
@@ -207,11 +225,6 @@ dependencies: \
   /opt/homebrew/include/glm/gtc/../gtc/constants.hpp \
   /opt/homebrew/include/glm/gtc/../gtc/matrix_transform.hpp \
   /opt/homebrew/include/glm/gtc/../ext/vector_relational.hpp \
-  /opt/homebrew/include/glm/./ext/../detail/qualifier.hpp \
-  /opt/homebrew/include/glm/./ext/vector_relational.inl \
-  /opt/homebrew/include/glm/./ext/../vector_relational.hpp \
-  /opt/homebrew/include/glm/./ext/../common.hpp \
-  /opt/homebrew/include/glm/./ext/../detail/type_float.hpp \
   /opt/homebrew/include/glm/gtc/../ext/quaternion_common.hpp \
   /opt/homebrew/include/glm/./ext/../ext/quaternion_geometric.hpp \
   /opt/homebrew/include/glm/./ext/../exponential.hpp \
@@ -251,13 +264,7 @@ dependencies: \
   /opt/homebrew/include/glm/gtc/quaternion.inl \
   /opt/homebrew/include/glm/gtc/../exponential.hpp \
   /opt/homebrew/include/glm/gtc/epsilon.hpp \
-  /opt/homebrew/include/glm/gtc/../detail/setup.hpp \
-  /opt/homebrew/include/glm/gtc/../detail/qualifier.hpp \
-  /opt/homebrew/include/glm/gtc/epsilon.inl \
-  /opt/homebrew/include/glm/gtc/../vector_relational.hpp \
-  /opt/homebrew/include/glm/gtc/../common.hpp \
   /opt/homebrew/include/glm/gtx/../gtx/dual_quaternion.hpp \
-  /opt/homebrew/include/glm/gtx/../glm.hpp \
   /opt/homebrew/include/glm/gtx/../gtc/constants.hpp \
   /opt/homebrew/include/glm/gtx/dual_quaternion.inl \
   /opt/homebrew/include/glm/gtx/../geometric.hpp \

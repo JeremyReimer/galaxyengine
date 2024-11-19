@@ -34,6 +34,7 @@
 #include <chrono>
 #include <ctime>
 #include <array>
+#include <vulkan/vulkan.h>
 #include "lisp.hpp"
 
 struct environment env; // This is the LISP environment to save variables, etc
@@ -53,7 +54,8 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME
 };
 
 #ifdef DEBUG
@@ -228,6 +230,10 @@ private:
     
     bool framebufferResized = false;
     
+    glm::vec3 PlayerCameraDirection;
+    float PlayerVelocity;
+    float PlayerTurnVelocityX;
+    float PlayerTurnVelocityY;
     std::vector<glm::vec3> ObjectMovementDirection;
     std::vector<float> ObjectVelocity;
     
@@ -238,7 +244,7 @@ private:
         // Load a bunch of stuff from the LISP interpreter
         std::printf("\nLoading LISP variables...\n");
         environment global_environment; add_globals(global_environment);
-        std::string set_lisp_expression = "(set models (quote (\"models/zruthy-fighter1.obj\" \"models/viking_room.obj\")))";
+        std::string set_lisp_expression = "(set models (quote (\"models/galaxy-ui.obj\" \"models/zruthy-fighter1.obj\" \"models/viking_room.obj\")))";
         RunLISPexpression(set_lisp_expression, &global_environment);
         std::string lisp_expression2 = "models";
         RunLISPexpression(lisp_expression2, &global_environment);
@@ -425,7 +431,7 @@ private:
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
 
         VkInstanceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -503,6 +509,7 @@ private:
     }
 
     void createLogicalDevice() {
+
         QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -520,9 +527,14 @@ private:
 
         VkPhysicalDeviceFeatures deviceFeatures{};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
+        
+        VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extendedFeatures{};
+        extendedFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+        extendedFeatures.extendedDynamicState = VK_TRUE;
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        createInfo.pNext = &extendedFeatures;
 
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
@@ -778,12 +790,14 @@ private:
 
         std::vector<VkDynamicState> dynamicStates = {
             VK_DYNAMIC_STATE_VIEWPORT,
-            VK_DYNAMIC_STATE_SCISSOR
+            VK_DYNAMIC_STATE_SCISSOR,
+            VK_DYNAMIC_STATE_DEPTH_TEST_ENABLE
         };
         VkPipelineDynamicStateCreateInfo dynamicState{};
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
+        
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1223,7 +1237,7 @@ private:
             vkMapMemory(device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
         }
         
-        // initialize ubo array (not sure if we need this)
+        // initialize ubo array
         for (int j=0; j < MAX_MODELS; j++) {
             UniformBufferObject ubo;
             ubos.push_back(ubo);
@@ -1408,6 +1422,7 @@ private:
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
+        
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1416,6 +1431,7 @@ private:
         renderPassInfo.renderArea.offset = {0, 0};
         renderPassInfo.renderArea.extent = swapChainExtent;
 
+        
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
@@ -1448,8 +1464,8 @@ private:
         
             // We want multiple descriptorSets, one for the scene and one for each object
             // REPLACE &descriptorSets[currentFrame] with &objects[i].descriptorSet for multiple objects
-        for (int j=0; j < MAX_MODELS; j++) { // Iterate over all available models (for now)
-            
+        
+        for (int j=MAX_MODELS - 1; j > -1; j--) { // Iterate over all available models BACKWARDS (for now)
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[j * 2 + currentFrame], 0, nullptr);
             // REPLACE static_cast<uint32_t>(indices.size()) with objects[i].indexCount and second-to-last 0 with
             // objects[i].indexBase
@@ -1458,8 +1474,24 @@ private:
             if (j > 0) {
                 indexBase = perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model
             }
-            //std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            // I need to add an external command, vkCmdSetDepthTestEnableEXT
+            // Provided by the VK_EXT_extended_dynamic_state extension
+            // Trying to load it manually here, see:
+            // https://stackoverflow.com/questions/77816278/vulkan-device-extension-loading
+            PFN_vkCmdSetDepthTestEnableEXT vkCmdSetDepthTestEnableEXT;
+            // set value for vkCmdSetDepthTestEnableEXT
+            vkCmdSetDepthTestEnableEXT = (PFN_vkCmdSetDepthTestEnableEXT) vkGetInstanceProcAddr(instance, "vkCmdSetDepthTestEnableEXT");
+            
+            if (j == 0) {
+                vkCmdSetDepthTestEnableEXT(commandBuffer, VK_FALSE);
+            }
+            else {
+                vkCmdSetDepthTestEnableEXT(commandBuffer, VK_TRUE);
+            }
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indexCount), 1, indexBase, 0, 0);
+
+
         }
         vkCmdEndRenderPass(commandBuffer);
 
@@ -1491,7 +1523,7 @@ private:
     }
     
     void setObjectProperties() {
-        for (int j = 0; j < MAX_MODELS; j++) {
+        for (int j = 1; j < MAX_MODELS; j++) {
             ObjectMovementDirection.push_back(glm::vec3(0.1f * j, 0.1f, 0.1f));
             ObjectVelocity.push_back(0.01f);
         }
@@ -1750,6 +1782,24 @@ private:
     }
 
     std::vector<const char*> getRequiredExtensions() {
+        
+
+
+        
+        // Added to list all available extensions
+        uint32_t extensionCount = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+        std::vector<VkExtensionProperties> extensions_list(extensionCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions_list.data());
+
+        std::cout << "Supported instance extensions:" << std::endl;
+        for (const auto& extension : extensions_list) {
+            std::cout << "Extension name: " << extension.extensionName << std::endl;
+            std::cout << "Extension version: " << extension.specVersion << std::endl;
+        }
+        
+        //start of Windows code---
         //uint32_t glfwExtensionCount = 0;
         //const char** glfwExtensions;
         //glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -1762,6 +1812,8 @@ private:
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
         memcpy(extensions.data(), glfwExtensions, sizeof(const char*) * glfwExtensionCount);
         extensions.push_back("VK_KHR_portability_enumeration");
+        //extensions.push_back("VK_KHR_portability_subset");
+        extensions.push_back("VK_KHR_get_physical_device_properties2");
         // end of macOS-specific section
 
         if (enableValidationLayers) {
@@ -1822,6 +1874,7 @@ private:
 };
 
 int main() {
+      
     HelloTriangleApplication app;
 
     try {
