@@ -37,9 +37,11 @@ GalaxyEngine is a work in progress. Please check back for further updates.
 
 ## Version
 
-Current version: 0.52 November 12, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering, sets up image views, sets up pipeline layout, framebuffers, and command buffers, sets up a perspective and camera angle of 45 degrees, and draws two 3D model in .obj format (using depth buffers), texture mapping the models, and rotating the models 90 degrees every second. There is also limited joystick support, which will eventually be the preferred game interaction mode. 
+Current version: 0.60 November 202, 2024 - Initializes blank glfw window at 1200 x 600, initializes Vulkan layer, and selects the first physical GPU device to use, initializes Logical Device on top of it, creates draw surface to connect Vulkan with glfw window, sets up swap chain for triple buffering, sets up image views, sets up pipeline layout, framebuffers, and command buffers, sets up a perspective and camera angle of 45 degrees, and draws two 3D model in .obj format (using depth buffers), with texture mapping. It also draws a UI layer (Model 0) that is kept static compared to the player position.
 
-Right now the joystick is used to move the camera around, and the secondary throttle moves the camera in and out.
+The models each have their own separate rotation and motion velocities, which are updated based on elapsed time (right now the engine is locked to 60fps).
+
+The joystick is used to move the player's first-person spaceship view left, right, up, and down, and the throttle is used to thrust forward and reverse.
 
 But before it displays the 3D model through Vulkan, it starts running a very simple LISP interpreter (thanks to Anthony Hay) that's a bit over 100 lines of code. 
 

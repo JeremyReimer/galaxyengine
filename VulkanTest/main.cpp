@@ -10,6 +10,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/hash.hpp>
 
+
 #include <unordered_map>
 
 #include <inttypes.h>
@@ -41,7 +42,7 @@ struct environment env; // This is the LISP environment to save variables, etc
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
-const char* VERSION = "GalaxyEngine 0.52";
+const char* VERSION = "GalaxyEngine 0.60";
 
 const std::array<std::string, 3> ModelPaths = {"models/galaxy-ui.obj", "models/zruthy-fighter1.obj","models/viking_room.obj"};
 const std::array<std::string, 3> TexturePaths = {"textures/ui-texture.png","textures/spaceship-texture.png", "textures/viking_room.png"};
@@ -230,10 +231,14 @@ private:
     
     bool framebufferResized = false;
     
+    glm::vec3 PlayerPosition;
     glm::vec3 PlayerCameraDirection;
     float PlayerVelocity;
+    float PlayerTurnRate;
     float PlayerTurnVelocityX;
     float PlayerTurnVelocityY;
+    float PlayerTurnVelocityMax;
+    std::vector<glm::vec3> ObjectPosition;
     std::vector<glm::vec3> ObjectMovementDirection;
     std::vector<float> ObjectVelocity;
     
@@ -1474,7 +1479,10 @@ private:
             if (j > 0) {
                 indexBase = perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model
             }
-            std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            // DEBUGGING:
+            // std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
+            
+            // FORCE DEPTH BUFFERING OFF FOR UI LAYER
             // I need to add an external command, vkCmdSetDepthTestEnableEXT
             // Provided by the VK_EXT_extended_dynamic_state extension
             // Trying to load it manually here, see:
@@ -1482,7 +1490,7 @@ private:
             PFN_vkCmdSetDepthTestEnableEXT vkCmdSetDepthTestEnableEXT;
             // set value for vkCmdSetDepthTestEnableEXT
             vkCmdSetDepthTestEnableEXT = (PFN_vkCmdSetDepthTestEnableEXT) vkGetInstanceProcAddr(instance, "vkCmdSetDepthTestEnableEXT");
-            
+            // Turn off Depth Buffering just for the UI layer
             if (j == 0) {
                 vkCmdSetDepthTestEnableEXT(commandBuffer, VK_FALSE);
             }
@@ -1523,10 +1531,24 @@ private:
     }
     
     void setObjectProperties() {
-        for (int j = 1; j < MAX_MODELS; j++) {
-            ObjectMovementDirection.push_back(glm::vec3(0.1f * j, 0.1f, 0.1f));
-            ObjectVelocity.push_back(0.01f);
+        // Set all the models position, movement and direction values
+        for (int j = 0; j < MAX_MODELS; j++) {
+            ObjectPosition.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
+            ObjectMovementDirection.push_back(glm::vec3(0.1f, 0.1f, 0.1f));
+            ObjectVelocity.push_back(1.2f);
         }
+        // Set the player position, turn rate and velocities, and camera view direction
+        PlayerPosition = glm::vec3(5.0f, -5.0f, 4.0f);
+        PlayerVelocity = 0.005f;
+        PlayerTurnRate = 0.005f;
+        PlayerTurnVelocityX = 0.0f;
+        PlayerTurnVelocityY = 0.0f;
+        PlayerTurnVelocityMax = 0.1f;
+        PlayerCameraDirection = glm::vec3(-5.0f, 5.0f, -4.0f); // start off looking at the origin, (0,0,0)
+        
+        // Set the UI default position
+        ObjectPosition[0] = ObjectPosition[0] + PlayerCameraDirection;
+        ObjectVelocity[0] = 0.0f;
     }
     
     void updateUniformBuffer(uint32_t currentImage, uint32_t currentModel) {
@@ -1535,7 +1557,7 @@ private:
         const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
         // Temporary joystick debugging
         //std::printf("Total axes: %i\n", count);
-        //for (int i=0; i <= (sizeof(&axes) / sizeof(&axes[0])); i++) {
+        //for (int i=0; i <= count; i++) {
         //    std::printf("%lf , ", axes[i]);
         //}
         //std::printf("\n");
@@ -1547,23 +1569,49 @@ private:
         for (int j=0; j < MAX_MODELS; j++) {
             UniformBufferObject ubo{}; // get the UBO from the array
             ubo = ubos[j];
+            
+            
+            // Rotate non-UI models (temporary for debugging)
             if (j == 1) {
-                ubo.model = glm::rotate(glm::mat4(1.0f), time * -1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * -1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             } else if (j == 2) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
-            else  if (j == 0) {
-                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(30.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            }
+
             // update movement (all except j=0 which is the UI layer)
             if (j != 0) {
-                ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time);
+                ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
             }
-            glm::vec3 playerAngleX = glm::rotateX(glm::vec3(2.0f, 2.0f, 2.0f), axes[0] + 2.0f * 3.0f + 2.0f);
-            playerAngleX *= (axes[3] + 2.0f) * 1.0f;
-            glm::vec3 playerAngleY = glm::rotateY(glm::vec3(2.0f, 2.0f, 2.0f), axes[1] * 3.0f + 2.0f);
-            ubo.view = glm::lookAt(playerAngleX, playerAngleY, glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+            
+            // Update player position based on throttle speed
+            PlayerPosition = PlayerPosition + PlayerCameraDirection * PlayerVelocity * axes[3] * -1.0f * time;
+            
+            // Update player direction based on joystick axes
+            PlayerTurnVelocityX = PlayerTurnVelocityX + axes[0] * PlayerTurnRate;
+            PlayerTurnVelocityY = PlayerTurnVelocityY + axes[1] * PlayerTurnRate;
+            if (PlayerTurnVelocityX > PlayerTurnVelocityMax) { PlayerTurnVelocityX = PlayerTurnVelocityMax;}
+            if (PlayerTurnVelocityX < PlayerTurnVelocityMax * -1.0f) { PlayerTurnVelocityX = PlayerTurnVelocityMax * -1.0f;}
+            if (PlayerTurnVelocityY > PlayerTurnVelocityMax) { PlayerTurnVelocityY = PlayerTurnVelocityMax;}
+            if (PlayerTurnVelocityY < PlayerTurnVelocityMax * -1.0f) { PlayerTurnVelocityY = PlayerTurnVelocityMax * -1.0f;}
+            
+            // rotate player camera based on turning speed
+            PlayerCameraDirection = glm::rotate(PlayerCameraDirection, -1.0f * time * glm::radians(PlayerTurnVelocityX), glm::vec3(0.0f, 0.0f, 1.0f));
+            PlayerCameraDirection = glm::rotate(PlayerCameraDirection, -1.0f * time * glm::radians(PlayerTurnVelocityY), glm::vec3(0.0f, 1.0f, 0.0f));
+            // set camera view and projection matrix
+            glm::vec3 playerLookAt = PlayerPosition + PlayerCameraDirection;
+            
+            // set the UI layer to be the same as the player camera
+            if (j == 0) {
+                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                ubo.model = glm::translate(ubo.model, PlayerPosition + PlayerCameraDirection);
+
+            }
+
+            std::cout << "PlayerTurnVelocityX:" << PlayerTurnVelocityX  << "  ";
+            std::cout << "PlayerTurnVelocityY:" << PlayerTurnVelocityY  << "  \n";
+
+            ubo.view = glm::lookAt(PlayerPosition, playerLookAt, glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 20.0f);
             ubo.proj[1][1] *= -1; // Because GLM was designed for OpenGL which has an inverse Y axis from Vulkan
             int bufferImage = (j * 2) + currentImage;
             memcpy(uniformBuffersMapped[bufferImage], &ubo, sizeof(ubo));
