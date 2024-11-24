@@ -233,6 +233,8 @@ private:
     
     glm::vec3 PlayerPosition;
     glm::vec3 PlayerCameraDirection;
+    glm::vec3 PlayerUpVector;
+    glm::vec3 PlayerLeftVector;
     float PlayerVelocity;
     float PlayerTurnRate;
     float PlayerTurnVelocityX;
@@ -1538,13 +1540,15 @@ private:
             ObjectVelocity.push_back(1.2f);
         }
         // Set the player position, turn rate and velocities, and camera view direction
-        PlayerPosition = glm::vec3(5.0f, -5.0f, 4.0f);
-        PlayerVelocity = 0.005f;
-        PlayerTurnRate = 0.005f;
+        PlayerPosition = glm::vec3(5.0f, 0.0f, 0.0f);
+        PlayerVelocity = 0.001f;
+        PlayerTurnRate = 0.002f;
         PlayerTurnVelocityX = 0.0f;
         PlayerTurnVelocityY = 0.0f;
-        PlayerTurnVelocityMax = 0.1f;
-        PlayerCameraDirection = glm::vec3(-5.0f, 5.0f, -4.0f); // start off looking at the origin, (0,0,0)
+        PlayerTurnVelocityMax = 0.05f;
+        PlayerCameraDirection = glm::vec3(-5.0f, 0.0f, 0.0f); // start off looking at the origin, (0,0,0)
+        PlayerUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
+        PlayerLeftVector = glm::vec3(-1.0f, 0.0f, 0.0f);
         
         // Set the UI default position
         ObjectPosition[0] = ObjectPosition[0] + PlayerCameraDirection;
@@ -1579,9 +1583,9 @@ private:
             }
 
             // update movement (all except j=0 which is the UI layer)
-            if (j != 0) {
-                ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
-            }
+            //if (j != 0) {
+            //    ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
+            //}
             
             // Update player position based on throttle speed
             PlayerPosition = PlayerPosition + PlayerCameraDirection * PlayerVelocity * axes[3] * -1.0f * time;
@@ -1597,6 +1601,9 @@ private:
             // rotate player camera based on turning speed
             PlayerCameraDirection = glm::rotate(PlayerCameraDirection, -1.0f * time * glm::radians(PlayerTurnVelocityX), glm::vec3(0.0f, 0.0f, 1.0f));
             PlayerCameraDirection = glm::rotate(PlayerCameraDirection, -1.0f * time * glm::radians(PlayerTurnVelocityY), glm::vec3(0.0f, 1.0f, 0.0f));
+            // update player Up and Left vectors based on turning speed
+            PlayerUpVector = glm::rotate(PlayerUpVector, -1.0f * time * glm::radians(PlayerTurnVelocityY), glm::vec3(0.0f, 1.0f, 0.0f));
+            PlayerLeftVector = glm::rotate(PlayerUpVector, -1.0f * time * glm::radians(PlayerTurnVelocityX), glm::vec3(0.0f, 0.0f, 1.0f));
             // set camera view and projection matrix
             glm::vec3 playerLookAt = PlayerPosition + PlayerCameraDirection;
             
