@@ -42,10 +42,10 @@ struct environment env; // This is the LISP environment to save variables, etc
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
-const char* VERSION = "GalaxyEngine 0.60";
+const char* VERSION = "GalaxyEngine 0.61";
 
-const std::array<std::string, 3> ModelPaths = {"models/galaxy-ui.obj", "models/zruthy-fighter1.obj","models/viking_room.obj"};
-const std::array<std::string, 3> TexturePaths = {"textures/ui-texture.png","textures/spaceship-texture.png", "textures/viking_room.png"};
+const std::array<std::string, 4> ModelPaths = {"models/zruthy-fighter1.obj","models/asteroid-3a.obj","models/asteroid-2a.obj", "models/galaxy-ui.obj"};
+const std::array<std::string, 4> TexturePaths = {"textures/spaceship-texture.png", "textures/asteroid-texture.png","textures/asteroid-texture-2.png","textures/ui-texture.png"};
 const int MAX_MODELS = ModelPaths.size();
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -1471,15 +1471,16 @@ private:
         
             // We want multiple descriptorSets, one for the scene and one for each object
             // REPLACE &descriptorSets[currentFrame] with &objects[i].descriptorSet for multiple objects
-        
-        for (int j=MAX_MODELS - 1; j > -1; j--) { // Iterate over all available models BACKWARDS (for now)
+        int indexRunningCounter = 0;
+        for (int j=0; j < MAX_MODELS; j++) { // Iterate over all available models BACKWARDS (for now)
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[j * 2 + currentFrame], 0, nullptr);
             // REPLACE static_cast<uint32_t>(indices.size()) with objects[i].indexCount and second-to-last 0 with
             // objects[i].indexBase
             int indexCount = perModelIndices[j];
             int indexBase = 0;
             if (j > 0) {
-                indexBase = perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model
+                indexBase = indexRunningCounter + perModelIndices[j-1]; // if we're not at the first model, the offset is the size of the last model plus the running total
+                indexRunningCounter += perModelIndices[j-1];
             }
             // DEBUGGING:
             // std::printf("Drawing model %i with count %i and offset %i\n",j,indexCount,indexBase);
@@ -1576,16 +1577,18 @@ private:
             
             
             // Rotate non-UI models (temporary for debugging)
-            if (j == 1) {
+            if (j == 0) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * -1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            } else if (j == 2) {
+            } else if (j == 1) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            } else if (j == 2) {
+                ubo.model = glm::rotate(glm::mat4(1.0f), -1.0f * time * glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             }
 
-            // update movement (all except j=0 which is the UI layer)
-            //if (j != 0) {
-            //    ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
-            //}
+            // update movement (all except j=(MAX_MODELS - 1) which is the UI layer)
+            if (j != 0) {
+                ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
+            }
             
             // Update player position based on throttle speed
             PlayerPosition = PlayerPosition + PlayerCameraDirection * PlayerVelocity * axes[3] * -1.0f * time;
@@ -1608,14 +1611,14 @@ private:
             glm::vec3 playerLookAt = PlayerPosition + PlayerCameraDirection;
             
             // set the UI layer to be the same as the player camera
-            if (j == 0) {
+            if (j == (MAX_MODELS - 1)) {
                 ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                 ubo.model = glm::translate(ubo.model, PlayerPosition + PlayerCameraDirection);
 
             }
 
-            std::cout << "PlayerTurnVelocityX:" << PlayerTurnVelocityX  << "  ";
-            std::cout << "PlayerTurnVelocityY:" << PlayerTurnVelocityY  << "  \n";
+            //std::cout << "PlayerTurnVelocityX:" << PlayerTurnVelocityX  << "  ";
+            //std::cout << "PlayerTurnVelocityY:" << PlayerTurnVelocityY  << "  \n";
 
             ubo.view = glm::lookAt(PlayerPosition, playerLookAt, glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 20.0f);
