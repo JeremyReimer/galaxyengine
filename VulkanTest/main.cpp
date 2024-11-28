@@ -50,6 +50,8 @@ const int MAX_MODELS = ModelPaths.size();
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
+const float JOYSTICK_DEADZONE = 0.05f;
+
 const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -1494,7 +1496,7 @@ private:
             // set value for vkCmdSetDepthTestEnableEXT
             vkCmdSetDepthTestEnableEXT = (PFN_vkCmdSetDepthTestEnableEXT) vkGetInstanceProcAddr(instance, "vkCmdSetDepthTestEnableEXT");
             // Turn off Depth Buffering just for the UI layer
-            if (j == 0) {
+            if (j == (MAX_MODELS - 1)) {
                 vkCmdSetDepthTestEnableEXT(commandBuffer, VK_FALSE);
             }
             else {
@@ -1586,16 +1588,20 @@ private:
             }
 
             // update movement (all except j=(MAX_MODELS - 1) which is the UI layer)
-            if (j != 0) {
+            if (j != (MAX_MODELS - 1)) {
                 ubo.model = glm::translate(ubo.model, ObjectMovementDirection[j] * time * ObjectVelocity[j]);
             }
             
             // Update player position based on throttle speed
             PlayerPosition = PlayerPosition + PlayerCameraDirection * PlayerVelocity * axes[3] * -1.0f * time;
             
-            // Update player direction based on joystick axes
-            PlayerTurnVelocityX = PlayerTurnVelocityX + axes[0] * PlayerTurnRate;
-            PlayerTurnVelocityY = PlayerTurnVelocityY + axes[1] * PlayerTurnRate;
+            // Update player direction based on joystick axes, ignoring deadzone
+            if ((axes[0] > JOYSTICK_DEADZONE) || (axes[0] < -1.0f * JOYSTICK_DEADZONE)) {
+                PlayerTurnVelocityX = PlayerTurnVelocityX + axes[0] * PlayerTurnRate;
+            }
+            if ((axes[1] > JOYSTICK_DEADZONE) || (axes[1] < -1.0f * JOYSTICK_DEADZONE)) {
+                PlayerTurnVelocityY = PlayerTurnVelocityY + axes[1] * PlayerTurnRate * -1.0f; // invert joystick vertical axis
+            }
             if (PlayerTurnVelocityX > PlayerTurnVelocityMax) { PlayerTurnVelocityX = PlayerTurnVelocityMax;}
             if (PlayerTurnVelocityX < PlayerTurnVelocityMax * -1.0f) { PlayerTurnVelocityX = PlayerTurnVelocityMax * -1.0f;}
             if (PlayerTurnVelocityY > PlayerTurnVelocityMax) { PlayerTurnVelocityY = PlayerTurnVelocityMax;}
@@ -1612,13 +1618,14 @@ private:
             
             // set the UI layer to be the same as the player camera
             if (j == (MAX_MODELS - 1)) {
-                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                ubo.model = glm::rotate(glm::mat4(1.0f), 1.0f * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                 ubo.model = glm::translate(ubo.model, PlayerPosition + PlayerCameraDirection);
 
             }
 
             //std::cout << "PlayerTurnVelocityX:" << PlayerTurnVelocityX  << "  ";
             //std::cout << "PlayerTurnVelocityY:" << PlayerTurnVelocityY  << "  \n";
+            //std::cout << "Player X: " << PlayerPosition.x << "Player Y: " << PlayerPosition.y << "Player Z: " << PlayerPosition.z << "\n";
 
             ubo.view = glm::lookAt(PlayerPosition, playerLookAt, glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 20.0f);
