@@ -44,8 +44,8 @@ const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 const char* VERSION = "GalaxyEngine 0.61";
 
-const std::array<std::string, 4> ModelPaths = {"models/zruthy-fighter1.obj","models/asteroid-3a.obj","models/asteroid-2a.obj", "models/galaxy-ui.obj"};
-const std::array<std::string, 4> TexturePaths = {"textures/spaceship-texture.png", "textures/asteroid-texture.png","textures/asteroid-texture-2.png","textures/ui-texture.png"};
+const std::array<std::string, 5> ModelPaths = {"models/skybox.obj","models/zruthy-fighter1.obj","models/asteroid-3a.obj","models/asteroid-2a.obj", "models/galaxy-ui.obj" };
+const std::array<std::string, 5> TexturePaths = {"textures/skybox.png","textures/spaceship-texture.png", "textures/asteroid-texture.png","textures/asteroid-texture-2.png","textures/ui-texture.png"};
 const int MAX_MODELS = ModelPaths.size();
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -1548,7 +1548,7 @@ private:
         PlayerTurnRate = 0.002f;
         PlayerTurnVelocityX = 0.0f;
         PlayerTurnVelocityY = 0.0f;
-        PlayerTurnVelocityMax = 0.05f;
+        PlayerTurnVelocityMax = 0.02f;
         PlayerCameraDirection = glm::vec3(-5.0f, 0.0f, 0.0f); // start off looking at the origin, (0,0,0)
         PlayerUpVector = glm::vec3(0.0f, 0.0f, 1.0f);
         PlayerLeftVector = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -1625,10 +1625,10 @@ private:
 
             //std::cout << "PlayerTurnVelocityX:" << PlayerTurnVelocityX  << "  ";
             //std::cout << "PlayerTurnVelocityY:" << PlayerTurnVelocityY  << "  \n";
-            //std::cout << "Player X: " << PlayerPosition.x << "Player Y: " << PlayerPosition.y << "Player Z: " << PlayerPosition.z << "\n";
+            std::cout << "Player X: " << PlayerPosition.x << "Player Y: " << PlayerPosition.y << "Player Z: " << PlayerPosition.z << "\n";
 
             ubo.view = glm::lookAt(PlayerPosition, playerLookAt, glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 20.0f);
+            ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 1000.0f);
             ubo.proj[1][1] *= -1; // Because GLM was designed for OpenGL which has an inverse Y axis from Vulkan
             int bufferImage = (j * 2) + currentImage;
             memcpy(uniformBuffersMapped[bufferImage], &ubo, sizeof(ubo));
