@@ -8,6 +8,12 @@ GalaxyEngine is an open source 3D game engine that uses LISP as its native scrip
 
 The purpose of GalaxyEngine is to allow development of simple 3D games using an easy-to-use integrated development environment where everything is easily customizable.
 
+## Screenshot
+
+This is a screenshot from version 0.61:
+
+![image](screenshot-0p61.png)
+
 ## Building and running GalaxyEngine
 
 Right now, GalaxyEngine only runs on macOS. However, the code is portable across three platforms: macOS, Windows, and Linux.
