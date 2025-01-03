@@ -1545,7 +1545,7 @@ private:
         // Set the player position, turn rate and velocities, and camera view direction
         PlayerPosition = glm::vec3(5.0f, 0.0f, 0.0f);
         PlayerVelocity = 0.001f;
-        PlayerTurnRate = 0.002f;
+        PlayerTurnRate = 0.0002f;
         PlayerTurnVelocityX = 0.0f;
         PlayerTurnVelocityY = 0.0f;
         PlayerTurnVelocityMax = 0.02f;
@@ -1599,8 +1599,16 @@ private:
             if ((axes[0] > JOYSTICK_DEADZONE) || (axes[0] < -1.0f * JOYSTICK_DEADZONE)) {
                 PlayerTurnVelocityX = PlayerTurnVelocityX + axes[0] * PlayerTurnRate;
             }
+            else
+            {
+                PlayerTurnVelocityX = 0;
+            }
             if ((axes[1] > JOYSTICK_DEADZONE) || (axes[1] < -1.0f * JOYSTICK_DEADZONE)) {
                 PlayerTurnVelocityY = PlayerTurnVelocityY + axes[1] * PlayerTurnRate * -1.0f; // invert joystick vertical axis
+            }
+            else
+            {
+                PlayerTurnVelocityY = 0;
             }
             if (PlayerTurnVelocityX > PlayerTurnVelocityMax) { PlayerTurnVelocityX = PlayerTurnVelocityMax;}
             if (PlayerTurnVelocityX < PlayerTurnVelocityMax * -1.0f) { PlayerTurnVelocityX = PlayerTurnVelocityMax * -1.0f;}
